@@ -316,17 +316,21 @@
   function pad(n) { return String(n).padStart(2, '0'); }
 
   function formatTime(s) {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${pad(m)}:${pad(sec)}`;
+    const neg = s < 0;
+    const abs = Math.abs(s);
+    const m = Math.floor(abs / 60);
+    const sec = abs % 60;
+    return `${neg ? '\u2212' : ''}${pad(m)}:${pad(sec)}`;
   }
 
   function updateDisplay() {
     timeDisplay.textContent = formatTime(remaining);
-    minVal.textContent = pad(Math.floor(remaining / 60));
-    secVal.textContent = pad(remaining % 60);
-
-    const fraction = totalSeconds > 0 ? remaining / totalSeconds : 0;
+    // Adjust panel shows 0:00 once we go negative
+    const display = Math.max(0, remaining);
+    minVal.textContent = pad(Math.floor(display / 60));
+    secVal.textContent = pad(display % 60);
+    // Ring stays fully empty once we pass zero
+    const fraction = totalSeconds > 0 ? Math.max(0, remaining) / totalSeconds : 0;
     ring.style.strokeDashoffset = CIRC * (1 - fraction);
   }
 
@@ -371,7 +375,7 @@
   function setButtons() {
     const canAdjust = state === 'idle';
     btnStart.disabled = state === 'running' || state === 'done';
-    btnPause.disabled = state !== 'running';
+    btnPause.disabled = state !== 'running' && state !== 'done';
     btnStop.disabled  = state === 'idle';
     document.getElementById('minDown').disabled = !canAdjust;
     document.getElementById('minUp').disabled   = !canAdjust;
@@ -397,28 +401,32 @@
 
   btnStart.addEventListener('click', () => {
     if (state === 'idle' && remaining === 0) return;
-    if (state === 'done') return;
+    if (state === 'running' || state === 'done') return;
 
-    state = 'running';
-    setVisualState('running');
+    // If resuming after zero, stay in done visuals but keep ticking
+    const resumingNegative = remaining < 0;
+    state = resumingNegative ? 'done' : 'running';
+    setVisualState(state);
     setButtons();
 
     interval = setInterval(() => {
       remaining--;
       updateDisplay();
       updateBgGlow();
-      if (remaining <= 0) {
-        clearInterval(interval);
-        interval = null;
+      if (remaining === 0) {
         state = 'done';
         setVisualState('done');
         setButtons();
+      }
+      if (remaining <= -totalSeconds) {
+        clearInterval(interval);
+        interval = null;
       }
     }, 1000);
   });
 
   btnPause.addEventListener('click', () => {
-    if (state !== 'running') return;
+    if (state !== 'running' && state !== 'done') return;
     clearInterval(interval);
     interval = null;
     state = 'paused';
