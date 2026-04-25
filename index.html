@@ -344,7 +344,7 @@
     }
     // running or paused — pick color based on remaining time
     bgGlow.classList.add('visible');
-    if (remaining <= 300) { // 5 min or less → yellow
+    if (remaining <= totalSeconds * 0.2) { // 20% or less → yellow
       bgGlow.classList.remove('green', 'red');
       bgGlow.classList.add('yellow');
     } else {
