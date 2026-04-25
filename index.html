@@ -221,17 +221,20 @@
     .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .ctrl-btn:active:not(:disabled) { transform: scale(0.95); }
 
-    /* Done red background overlay */
-    #redOverlay {
+    /* Background glow overlay — green → yellow → red */
+    #bgGlow {
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at center, rgba(180,0,30,0.45) 0%, rgba(120,0,20,0.25) 60%, transparent 100%);
-      opacity: 0;
       pointer-events: none;
       z-index: 0;
-      transition: opacity 1.2s ease;
+      opacity: 0;
+      transition: opacity 1.2s ease, background 1.5s ease;
+      background: radial-gradient(ellipse at center, rgba(0,180,80,0.30) 0%, rgba(0,100,40,0.15) 60%, transparent 100%);
     }
-    #redOverlay.visible { opacity: 1; }
+    #bgGlow.green  { background: radial-gradient(ellipse at center, rgba(0,200,90,0.28)  0%, rgba(0,100,40,0.13)  60%, transparent 100%); }
+    #bgGlow.yellow { background: radial-gradient(ellipse at center, rgba(220,180,0,0.35)  0%, rgba(140,100,0,0.18) 60%, transparent 100%); }
+    #bgGlow.red    { background: radial-gradient(ellipse at center, rgba(180,0,30,0.45)   0%, rgba(120,0,20,0.25)  60%, transparent 100%); }
+    #bgGlow.visible { opacity: 1; }
 
     /* Done flash */
     @keyframes flashDone {
@@ -250,7 +253,7 @@
   </style>
 </head>
 <body>
-<div id="redOverlay"></div>
+<div id="bgGlow"></div>
 <div class="container">
   <div class="label">Countdown Timer</div>
 
@@ -327,7 +330,28 @@
     ring.style.strokeDashoffset = CIRC * (1 - fraction);
   }
 
-  const redOverlay = document.getElementById('redOverlay');
+  const bgGlow = document.getElementById('bgGlow');
+
+  function updateBgGlow() {
+    if (state === 'idle') {
+      bgGlow.classList.remove('visible', 'green', 'yellow', 'red');
+      return;
+    }
+    if (state === 'done') {
+      bgGlow.classList.remove('green', 'yellow');
+      bgGlow.classList.add('red', 'visible');
+      return;
+    }
+    // running or paused — pick color based on remaining time
+    bgGlow.classList.add('visible');
+    if (remaining <= 300) { // 5 min or less → yellow
+      bgGlow.classList.remove('green', 'red');
+      bgGlow.classList.add('yellow');
+    } else {
+      bgGlow.classList.remove('yellow', 'red');
+      bgGlow.classList.add('green');
+    }
+  }
 
   function setVisualState(s) {
     timeDisplay.className = 'time-text ' + (s !== 'idle' ? s : '');
@@ -341,7 +365,7 @@
     ring.style.stroke = ringColor[s];
     ring.style.filter = `drop-shadow(0 0 8px ${ringColor[s]}99)`;
 
-    redOverlay.classList.toggle('visible', s === 'done');
+    updateBgGlow();
   }
 
   function setButtons() {
@@ -382,6 +406,7 @@
     interval = setInterval(() => {
       remaining--;
       updateDisplay();
+      updateBgGlow();
       if (remaining <= 0) {
         clearInterval(interval);
         interval = null;
