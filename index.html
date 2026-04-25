@@ -107,6 +107,7 @@
     .time-text.running { color: var(--green); text-shadow: 0 0 18px rgba(0,230,118,0.5); }
     .time-text.paused  { color: var(--amber); text-shadow: 0 0 18px rgba(255,171,0,0.5); }
     .time-text.done    { color: var(--accent2); text-shadow: var(--glow2); }
+    .time-text.stopped { color: var(--accent2); text-shadow: var(--glow2); }
 
     .status-badge {
       font-size: 10px;
@@ -118,6 +119,7 @@
     .status-badge.running { color: var(--green); }
     .status-badge.paused  { color: var(--amber); }
     .status-badge.done    { color: var(--accent2); }
+    .status-badge.stopped { color: var(--accent2); }
 
     /* Adjust panel */
     .adjust-panel {
@@ -341,7 +343,7 @@
       bgGlow.classList.remove('visible', 'green', 'yellow', 'red');
       return;
     }
-    if (state === 'done') {
+    if (state === 'done' || state === 'stopped') {
       bgGlow.classList.remove('green', 'yellow');
       bgGlow.classList.add('red', 'visible');
       return;
@@ -362,10 +364,10 @@
     statusBadge.className = 'status-badge ' + (s !== 'idle' ? s : '');
     ring.className        = 'ring-progress ' + (s === 'running' ? 'running' : '');
 
-    const labels = { idle: 'Ready', running: 'Running', paused: 'Paused', done: 'Done' };
+    const labels = { idle: 'Ready', running: 'Running', paused: 'Paused', done: 'Done', stopped: 'Ended' };
     statusBadge.textContent = labels[s];
 
-    const ringColor = { idle: '#00e5ff', running: '#00e676', paused: '#ffab00', done: '#ff4081' };
+    const ringColor = { idle: '#00e5ff', running: '#00e676', paused: '#ffab00', done: '#ff4081', stopped: '#ff4081' };
     ring.style.stroke = ringColor[s];
     ring.style.filter = `drop-shadow(0 0 8px ${ringColor[s]}99)`;
 
@@ -374,7 +376,7 @@
 
   function setButtons() {
     const canAdjust = state === 'idle';
-    btnStart.disabled = state === 'running' || state === 'done';
+    btnStart.disabled = state === 'running' || state === 'done' || state === 'stopped';
     btnPause.disabled = state !== 'running' && state !== 'done';
     btnStop.disabled  = state === 'idle';
     document.getElementById('minDown').disabled = !canAdjust;
@@ -421,6 +423,9 @@
       if (remaining <= -totalSeconds) {
         clearInterval(interval);
         interval = null;
+        state = 'stopped';
+        setVisualState('stopped');
+        setButtons();
       }
     }, 1000);
   });
