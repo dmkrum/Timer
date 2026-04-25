@@ -66,22 +66,22 @@
     /* SVG Ring */
     .ring-wrap {
       position: relative;
-      width: 280px;
-      height: 280px;
+      width: 380px;
+      height: 380px;
     }
 
     .ring-wrap svg {
       transform: rotate(-90deg);
     }
 
-    .ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+    .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
     .ring-progress {
       fill: none;
       stroke: var(--accent);
-      stroke-width: 6;
+      stroke-width: 8;
       stroke-linecap: round;
       transition: stroke-dashoffset 0.5s linear, stroke 0.3s;
-      filter: drop-shadow(0 0 6px rgba(0,229,255,0.7));
+      filter: drop-shadow(0 0 8px rgba(0,229,255,0.7));
     }
 
     .display {
@@ -96,7 +96,7 @@
 
     .time-text {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 62px;
+      font-size: 86px;
       letter-spacing: 0.04em;
       color: var(--accent);
       text-shadow: var(--glow);
@@ -221,6 +221,18 @@
     .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .ctrl-btn:active:not(:disabled) { transform: scale(0.95); }
 
+    /* Done red background overlay */
+    #redOverlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(180,0,30,0.45) 0%, rgba(120,0,20,0.25) 60%, transparent 100%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 1.2s ease;
+    }
+    #redOverlay.visible { opacity: 1; }
+
     /* Done flash */
     @keyframes flashDone {
       0%, 100% { opacity: 1; }
@@ -238,14 +250,15 @@
   </style>
 </head>
 <body>
+<div id="redOverlay"></div>
 <div class="container">
   <div class="label">Countdown Timer</div>
 
   <div class="ring-wrap">
-    <svg width="280" height="280" viewBox="0 0 280 280">
-      <circle class="ring-bg" cx="140" cy="140" r="128"/>
-      <circle class="ring-progress" id="ring" cx="140" cy="140" r="128"
-              stroke-dasharray="804.25" stroke-dashoffset="0"/>
+    <svg width="380" height="380" viewBox="0 0 380 380">
+      <circle class="ring-bg" cx="190" cy="190" r="174"/>
+      <circle class="ring-progress" id="ring" cx="190" cy="190" r="174"
+              stroke-dasharray="1093.0" stroke-dashoffset="0"/>
     </svg>
     <div class="display">
       <div class="time-text" id="timeDisplay">25:00</div>
@@ -280,7 +293,7 @@
 </div>
 
 <script>
-  const CIRC = 2 * Math.PI * 128; // ~804.25
+  const CIRC = 2 * Math.PI * 174; // ~1093.0
   const MAX_SECONDS = 60 * 60;
 
   let totalSeconds = 25 * 60;
@@ -314,6 +327,8 @@
     ring.style.strokeDashoffset = CIRC * (1 - fraction);
   }
 
+  const redOverlay = document.getElementById('redOverlay');
+
   function setVisualState(s) {
     timeDisplay.className = 'time-text ' + (s !== 'idle' ? s : '');
     statusBadge.className = 'status-badge ' + (s !== 'idle' ? s : '');
@@ -324,7 +339,9 @@
 
     const ringColor = { idle: '#00e5ff', running: '#00e676', paused: '#ffab00', done: '#ff4081' };
     ring.style.stroke = ringColor[s];
-    ring.style.filter = `drop-shadow(0 0 6px ${ringColor[s]}99)`;
+    ring.style.filter = `drop-shadow(0 0 8px ${ringColor[s]}99)`;
+
+    redOverlay.classList.toggle('visible', s === 'done');
   }
 
   function setButtons() {
