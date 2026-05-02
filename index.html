@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Countdown Timer</title>
-  <link href="index_files/css2.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -60,6 +60,16 @@
       text-transform: uppercase;
       color: var(--dim);
       font-weight: 500;
+      position: relative;
+      z-index: 4;
+      margin-bottom: 10px;
+    }
+
+    .top-ui {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
       position: relative;
       z-index: 4;
     }
@@ -208,6 +218,39 @@
       text-align: center;
     }
 
+    /* Preset time buttons */
+    .presets {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 6px;
+      position: relative;
+      z-index: 4;
+    }
+
+    .preset-btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #1a4a7a;
+      background: transparent;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #4da6ff;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .preset-btn:hover:not(:disabled) {
+      background: rgba(77,166,255,0.12);
+      border-color: #4da6ff;
+      box-shadow: 0 0 10px rgba(77,166,255,0.2);
+    }
+    .preset-btn:active:not(:disabled) { transform: scale(0.95); }
+    .preset-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
     /* Control buttons */
     .controls {
       display: flex;
@@ -284,18 +327,33 @@
 <body>
 <div id="bgGlow"></div>
 <div class="container">
-  <div class="label">Countdown Timer</div>
+  <div class="top-ui">
+    <div class="label">Countdown Timer</div>
+    <div class="presets" id="presets">
+      <button class="preset-btn" data-min="1">1m</button>
+      <button class="preset-btn" data-min="5">5m</button>
+      <button class="preset-btn" data-min="10">10m</button>
+      <button class="preset-btn" data-min="15">15m</button>
+      <button class="preset-btn" data-min="20">20m</button>
+      <button class="preset-btn" data-min="25">25m</button>
+      <button class="preset-btn" data-min="30">30m</button>
+      <button class="preset-btn" data-min="40">40m</button>
+      <button class="preset-btn" data-min="45">45m</button>
+      <button class="preset-btn" data-min="60">60m</button>
+    </div>
+  </div>
 
   <div class="ring-wrap">
     <svg viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg">
-      <circle class="ring-bg" cx="190" cy="190" r="174"></circle>
-      <circle class="ring-progress" id="ring" cx="190" cy="190" r="174" stroke-dasharray="1093.0" stroke-dashoffset="0" style="stroke-dasharray: 1093.27px; stroke-dashoffset: 0px; stroke: rgb(0, 112, 128); filter: drop-shadow(rgba(0, 112, 128, 0.8) 0px 0px 5px);"></circle>
+      <circle class="ring-bg" cx="190" cy="190" r="174"/>
+      <circle class="ring-progress" id="ring" cx="190" cy="190" r="174"
+              stroke-dasharray="1093.0" stroke-dashoffset="0"/>
     </svg>
   </div>
 
   <div class="display">
-    <div class="time-text" id="timeDisplay" style="font-size: 540px;">25:00</div>
-    <div class="status-badge " id="statusBadge">Ready</div>
+    <div class="time-text" id="timeDisplay">25:00</div>
+    <div class="status-badge" id="statusBadge">Ready</div>
   </div>
 
   <div class="bottom-ui">
@@ -320,8 +378,8 @@
 
     <div class="controls">
       <button class="ctrl-btn start" id="btnStart">Start</button>
-      <button class="ctrl-btn pause" id="btnPause" disabled="disabled">Pause</button>
-      <button class="ctrl-btn stop" id="btnStop" disabled="disabled">Stop</button>
+      <button class="ctrl-btn pause" id="btnPause" disabled>Pause</button>
+      <button class="ctrl-btn stop"  id="btnStop"  disabled>Reset</button>
     </div>
   </div>
 </div>
@@ -434,6 +492,7 @@
     document.getElementById('minUp').disabled   = !canAdjust;
     document.getElementById('secDown').disabled = !canAdjust;
     document.getElementById('secUp').disabled   = !canAdjust;
+    document.querySelectorAll('.preset-btn').forEach(b => b.disabled = !canAdjust);
 
     btnStart.textContent = state === 'paused' ? 'Resume' : 'Start';
   }
@@ -446,6 +505,14 @@
     remaining    = totalSeconds;
     updateDisplay();
   }
+
+  document.getElementById('presets').addEventListener('click', e => {
+    const btn = e.target.closest('.preset-btn');
+    if (!btn || state !== 'idle') return;
+    totalSeconds = parseInt(btn.dataset.min) * 60;
+    remaining    = totalSeconds;
+    updateDisplay();
+  });
 
   document.getElementById('minUp').addEventListener('click',   () => adjustTime(60));
   document.getElementById('minDown').addEventListener('click', () => adjustTime(-60));
@@ -510,6 +577,5 @@
   // Re-fit after web font finishes loading
   document.fonts.ready.then(fitText);
 </script>
-
-
-</body></html>
+</body>
+</html>
