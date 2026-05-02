@@ -432,9 +432,11 @@
     const display = Math.max(0, remaining);
     minVal.textContent = pad(Math.floor(display / 60));
     secVal.textContent = pad(display % 60);
-    // Ring stays fully empty once we pass zero
-    const fraction = totalSeconds > 0 ? Math.max(0, remaining) / totalSeconds : 0;
-    ring.style.strokeDashoffset = CIRC * (1 - fraction);
+    // Ring offset when not running (rAF handles it while running)
+    if (state === 'idle' || state === 'paused' || state === 'stopped') {
+      const fraction = totalSeconds > 0 ? Math.max(0, remaining) / totalSeconds : 0;
+      ring.style.strokeDashoffset = CIRC * (1 - fraction);
+    }
   }
 
   const bgGlow = document.getElementById('bgGlow');
@@ -519,6 +521,34 @@
   document.getElementById('secUp').addEventListener('click',   () => adjustTime(1));
   document.getElementById('secDown').addEventListener('click', () => adjustTime(-1));
 
+  // Smooth ring animation via requestAnimationFrame
+  let rafId       = null;
+  let startTime   = null; // wall-clock ms when this run started
+  let startRemain = null; // remaining seconds at start of this run
+
+  function updateRingSmooth(now) {
+    if (state !== 'running' && state !== 'done') return;
+    const elapsed = (now - startTime) / 1000; // fractional seconds elapsed
+    // Continuous remaining including sub-second fraction
+    const smoothRemaining = startRemain - elapsed;
+    // Ring uses smooth value, clamped to [-totalSeconds, totalSeconds]
+    const clamped = Math.max(-totalSeconds, Math.min(totalSeconds, smoothRemaining));
+    const fraction = totalSeconds > 0 ? Math.max(0, clamped) / totalSeconds : 0;
+    ring.style.strokeDashoffset = CIRC * (1 - fraction);
+    rafId = requestAnimationFrame(updateRingSmooth);
+  }
+
+  function startRaf() {
+    if (rafId) cancelAnimationFrame(rafId);
+    startTime   = performance.now();
+    startRemain = remaining;
+    rafId = requestAnimationFrame(updateRingSmooth);
+  }
+
+  function stopRaf() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
   btnStart.addEventListener('click', () => {
     if (state === 'idle' && remaining === 0) return;
     if (state === 'running' || state === 'done') return;
@@ -529,9 +559,19 @@
     setVisualState(state);
     setButtons();
 
+    startRaf();
+
     interval = setInterval(() => {
       remaining--;
-      updateDisplay();
+      // Update digit display and glow every second
+      timeDisplay.textContent = formatTime(remaining);
+      fitText();
+      const display = Math.max(0, remaining);
+      minVal.textContent = pad(Math.floor(display / 60));
+      secVal.textContent = pad(display % 60);
+      // Resync rAF origin each second to prevent drift
+      startTime   = performance.now();
+      startRemain = remaining;
       updateBgGlow();
       if (remaining === 0) {
         state = 'done';
@@ -541,6 +581,9 @@
       if (remaining <= -totalSeconds) {
         clearInterval(interval);
         interval = null;
+        stopRaf();
+        // Snap ring to final position
+        ring.style.strokeDashoffset = CIRC;
         state = 'stopped';
         setVisualState('stopped');
         setButtons();
@@ -552,6 +595,7 @@
     if (state !== 'running' && state !== 'done') return;
     clearInterval(interval);
     interval = null;
+    stopRaf();
     state = 'paused';
     setVisualState('paused');
     setButtons();
@@ -560,6 +604,7 @@
   btnStop.addEventListener('click', () => {
     clearInterval(interval);
     interval = null;
+    stopRaf();
     remaining = totalSeconds;
     state = 'idle';
     setVisualState('idle');
