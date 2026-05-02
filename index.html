@@ -576,6 +576,15 @@
   window.addEventListener('resize', fitText);
   // Re-fit after web font finishes loading
   document.fonts.ready.then(fitText);
+
+  // Arrow key shortcuts: → Start/Resume, ← Reset
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') {
+      if (!btnStart.disabled) btnStart.click();
+    } else if (e.key === 'ArrowLeft') {
+      if (!btnStop.disabled) btnStop.click();
+    }
+  });
 </script>
 </body>
 </html>
