@@ -6,3 +6,7 @@ Minutes and seconds remaining are shown. A circular indicator also shows the fra
 The background will start out with a green glow during the countdown. When 20% or less of the set time is left, the background will have a yellow glow. At time 0:00, the background will glow red.
 
 After time reaches 0:00, the countdown will continue past zero, letting the timekeeper know how far behind the schedule has become. The timer will stop once the set time has gone past zero.
+
+Buttons with various timer duration presets are available across the top of the window.
+
+The right arrow key will start the timer and the left arrow key will stop and reset the timer. This should allow presentation remotes to operate the timer.
