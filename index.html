@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Countdown Timer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <link href="index_files/css2.css" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -26,8 +26,10 @@
       background: var(--bg);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      padding: 32px 20px;
       font-family: 'Rajdhani', sans-serif;
       color: var(--text);
       overflow: hidden;
@@ -48,11 +50,8 @@
 
     .container {
       position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 28px;
+      z-index: 4;
+      display: contents; /* let children participate in body's flex layout */
     }
 
     .label {
@@ -61,53 +60,81 @@
       text-transform: uppercase;
       color: var(--dim);
       font-weight: 500;
+      position: relative;
+      z-index: 4;
     }
 
-    /* SVG Ring */
-    .ring-wrap {
+    /* Bottom controls cluster */
+    .bottom-ui {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
       position: relative;
-      width: 380px;
-      height: 380px;
+      z-index: 4;
+    }
+
+    /* Ring — fixed at center of screen, behind everything */
+    .ring-wrap {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(75vmin, 520px);
+      height: min(75vmin, 520px);
+      z-index: 1;
+      pointer-events: none;
     }
 
     .ring-wrap svg {
+      width: 100%;
+      height: 100%;
       transform: rotate(-90deg);
     }
 
-    .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+    .ring-bg { fill: none; stroke: #0e161f; stroke-width: 20; }
     .ring-progress {
       fill: none;
       stroke: var(--accent);
-      stroke-width: 8;
+      stroke-width: 20;
       stroke-linecap: round;
       transition: stroke-dashoffset 0.5s linear, stroke 0.3s;
       filter: drop-shadow(0 0 8px rgba(0,229,255,0.7));
     }
 
+    /* Time display — breaks free of the ring, fills the window width */
     .display {
-      position: absolute;
-      inset: 0;
+      position: fixed;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 6px;
+      z-index: 3;
+      pointer-events: none;
     }
 
     .time-text {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 86px;
-      letter-spacing: 0.04em;
-      color: var(--accent);
-      text-shadow: var(--glow);
-      transition: color 0.3s;
+      font-size: 100px; /* JS will override this immediately */
+      letter-spacing: 0.02em;
+      color: #33eeff;
+      text-shadow: 0 0 22px rgba(51,238,255,0.6);
+      transition: color 0.3s, text-shadow 0.3s;
       line-height: 1;
+      white-space: nowrap;
     }
 
-    .time-text.running { color: var(--green); text-shadow: 0 0 18px rgba(0,230,118,0.5); }
-    .time-text.paused  { color: var(--amber); text-shadow: 0 0 18px rgba(255,171,0,0.5); }
-    .time-text.done    { color: var(--accent2); text-shadow: var(--glow2); }
-    .time-text.stopped { color: var(--accent2); text-shadow: var(--glow2); }
+    /* Digits are always a brighter tint than the matching ring color */
+    .time-text.running  { color: #33ffaa; text-shadow: 0 0 24px rgba(51,255,170,0.65); }
+    .time-text.warning  { color: #ffd84d; text-shadow: 0 0 24px rgba(255,216,77,0.65); }
+    .time-text.paused   { color: #ffc933; text-shadow: 0 0 24px rgba(255,201,51,0.65); }
+    .time-text.done     { color: #ff6fa3; text-shadow: 0 0 24px rgba(255,111,163,0.65); }
+    .time-text.stopped  { color: #ff6fa3; text-shadow: 0 0 24px rgba(255,111,163,0.65); }
 
     .status-badge {
       font-size: 10px;
@@ -260,40 +287,42 @@
   <div class="label">Countdown Timer</div>
 
   <div class="ring-wrap">
-    <svg width="380" height="380" viewBox="0 0 380 380">
-      <circle class="ring-bg" cx="190" cy="190" r="174"/>
-      <circle class="ring-progress" id="ring" cx="190" cy="190" r="174"
-              stroke-dasharray="1093.0" stroke-dashoffset="0"/>
+    <svg viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg">
+      <circle class="ring-bg" cx="190" cy="190" r="174"></circle>
+      <circle class="ring-progress" id="ring" cx="190" cy="190" r="174" stroke-dasharray="1093.0" stroke-dashoffset="0" style="stroke-dasharray: 1093.27px; stroke-dashoffset: 0px; stroke: rgb(0, 112, 128); filter: drop-shadow(rgba(0, 112, 128, 0.8) 0px 0px 5px);"></circle>
     </svg>
-    <div class="display">
-      <div class="time-text" id="timeDisplay">25:00</div>
-      <div class="status-badge" id="statusBadge">Ready</div>
-    </div>
   </div>
 
-  <div class="adjust-panel">
-    <div class="adjust-group">
-      <div class="adjust-label">Minutes</div>
-      <div class="adjust-row">
-        <button class="adj-btn" id="minDown">−</button>
-        <div class="adj-val" id="minVal">25</div>
-        <button class="adj-btn" id="minUp">+</button>
-      </div>
-    </div>
-    <div class="adjust-group">
-      <div class="adjust-label">Seconds</div>
-      <div class="adjust-row">
-        <button class="adj-btn" id="secDown">−</button>
-        <div class="adj-val" id="secVal">00</div>
-        <button class="adj-btn" id="secUp">+</button>
-      </div>
-    </div>
+  <div class="display">
+    <div class="time-text" id="timeDisplay" style="font-size: 540px;">25:00</div>
+    <div class="status-badge " id="statusBadge">Ready</div>
   </div>
 
-  <div class="controls">
-    <button class="ctrl-btn start" id="btnStart">Start</button>
-    <button class="ctrl-btn pause" id="btnPause" disabled>Pause</button>
-    <button class="ctrl-btn stop"  id="btnStop"  disabled>Reset</button>
+  <div class="bottom-ui">
+    <div class="adjust-panel">
+      <div class="adjust-group">
+        <div class="adjust-label">Minutes</div>
+        <div class="adjust-row">
+          <button class="adj-btn" id="minDown">−</button>
+          <div class="adj-val" id="minVal">25</div>
+          <button class="adj-btn" id="minUp">+</button>
+        </div>
+      </div>
+      <div class="adjust-group">
+        <div class="adjust-label">Seconds</div>
+        <div class="adjust-row">
+          <button class="adj-btn" id="secDown">−</button>
+          <div class="adj-val" id="secVal">00</div>
+          <button class="adj-btn" id="secUp">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn start" id="btnStart">Start</button>
+      <button class="ctrl-btn pause" id="btnPause" disabled="disabled">Pause</button>
+      <button class="ctrl-btn stop" id="btnStop" disabled="disabled">Stop</button>
+    </div>
   </div>
 </div>
 
@@ -317,6 +346,19 @@
 
   function pad(n) { return String(n).padStart(2, '0'); }
 
+  function fitText() {
+    // Binary-search the largest font size where text fits window width
+    let lo = 10, hi = 1200;
+    timeDisplay.style.fontSize = hi + 'px';
+    while (hi - lo > 1) {
+      const mid = Math.floor((lo + hi) / 2);
+      timeDisplay.style.fontSize = mid + 'px';
+      if (timeDisplay.scrollWidth <= window.innerWidth) lo = mid;
+      else hi = mid;
+    }
+    timeDisplay.style.fontSize = lo + 'px';
+  }
+
   function formatTime(s) {
     const neg = s < 0;
     const abs = Math.abs(s);
@@ -327,6 +369,7 @@
 
   function updateDisplay() {
     timeDisplay.textContent = formatTime(remaining);
+    fitText();
     // Adjust panel shows 0:00 once we go negative
     const display = Math.max(0, remaining);
     minVal.textContent = pad(Math.floor(display / 60));
@@ -341,11 +384,13 @@
   function updateBgGlow() {
     if (state === 'idle') {
       bgGlow.classList.remove('visible', 'green', 'yellow', 'red');
+      timeDisplay.classList.remove('warning');
       return;
     }
     if (state === 'done' || state === 'stopped') {
       bgGlow.classList.remove('green', 'yellow');
       bgGlow.classList.add('red', 'visible');
+      timeDisplay.classList.remove('warning');
       return;
     }
     // running or paused — pick color based on remaining time
@@ -353,9 +398,15 @@
     if (remaining <= totalSeconds * 0.2) { // 20% or less → yellow
       bgGlow.classList.remove('green', 'red');
       bgGlow.classList.add('yellow');
+      timeDisplay.classList.add('warning');
+      ring.style.stroke = '#7a5500';
+      ring.style.filter = 'drop-shadow(0 0 5px #7a5500cc)';
     } else {
       bgGlow.classList.remove('yellow', 'red');
       bgGlow.classList.add('green');
+      timeDisplay.classList.remove('warning');
+      ring.style.stroke = '#007340';
+      ring.style.filter = 'drop-shadow(0 0 5px #007340cc)';
     }
   }
 
@@ -367,9 +418,9 @@
     const labels = { idle: 'Ready', running: 'Running', paused: 'Paused', done: 'Done', stopped: 'Ended' };
     statusBadge.textContent = labels[s];
 
-    const ringColor = { idle: '#00e5ff', running: '#00e676', paused: '#ffab00', done: '#ff4081', stopped: '#ff4081' };
+    const ringColor = { idle: '#007080', running: '#007340', paused: '#7a5500', done: '#882040', stopped: '#882040' };
     ring.style.stroke = ringColor[s];
-    ring.style.filter = `drop-shadow(0 0 8px ${ringColor[s]}99)`;
+    ring.style.filter = `drop-shadow(0 0 5px ${ringColor[s]}cc)`;
 
     updateBgGlow();
   }
@@ -454,6 +505,11 @@
   updateDisplay();
   setVisualState('idle');
   setButtons();
+
+  window.addEventListener('resize', fitText);
+  // Re-fit after web font finishes loading
+  document.fonts.ready.then(fitText);
 </script>
-</body>
-</html>
+
+
+</body></html>
